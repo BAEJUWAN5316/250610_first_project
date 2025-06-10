@@ -1,8 +1,17 @@
-from fastapi import FastAPI,Request, HTTPException
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
+from fastapi import FastAPI
 from pydantic import BaseModel
-from typing import Optional, List
+import requests
 
 app = FastAPI()
-templates = Jinja2Templates(directory="templates")
+
+class Question(BaseModel):
+    message: str
+
+@app.post("/ask_gpt")
+def ask_gpt(question: Question):
+    url = "https://dev.wenivops.co.kr/services/openai-api"
+    response = requests.post(url, json={"message": question.message})
+    get_reply = response.json()["message"]
+    return {"answer":get_reply}
+
+
