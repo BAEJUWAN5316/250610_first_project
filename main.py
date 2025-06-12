@@ -99,7 +99,7 @@ async def ask_gpt(request: Request):
     question = data.get("question")
 
     messages = [
-        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "system", "content": "You are an assistant who recommends lunch menus! Please recommend the right location, location, atmosphere, etc!"},
         {"role": "user", "content": question}
     ]
 
