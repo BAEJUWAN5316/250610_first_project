@@ -1,15 +1,138 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <title>GPT 질문 입력</title>
+  <meta charset="UTF-8">
+  <title>점메추리 - 챗봇</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+  </style>
 </head>
-<body>
-    <h1>GPT에게 질문해보세요</h1>
-    <form action="/ask_gpt" method="post">
-        <input type="text" name="question" placeholder="질문을 입력하세요">
-        <button type="submit">전송</button>
-    </form>
+<body class="min-h-screen bg-gradient-to-r from-pink-500 to-red-500 flex items-center justify-center">
+
+  <div class="w-full max-w-6xl bg-white rounded-2xl shadow-xl flex overflow-hidden">
+
+    <!-- ✅ 왼쪽: 모바일 스타일 챗봇 -->
+    <div class="w-1/2 bg-white p-6 flex flex-col items-center justify-start relative">
+      <div class="w-80 h-[600px] bg-gray-100 rounded-3xl shadow-inner border-4 border-purple-300 relative overflow-hidden flex flex-col">
+
+        <!-- 상단바 + 버튼 -->
+        <div class="bg-purple-500 text-white text-lg font-bold px-4 py-3 flex justify-between items-center">
+          <span>점메추리</span>
+          <div class="space-x-2 text-sm">
+            <button onclick="resetChat()" class="bg-white text-purple-500 px-2 py-1 rounded hover:bg-purple-100">초기화</button>
+            <button onclick="logout()" class="bg-white text-pink-500 px-2 py-1 rounded hover:bg-pink-100">로그아웃</button>
+          </div>
+        </div>
+
+        <!-- 채팅창 -->
+        <div id="chat-box" class="flex-1 p-4 overflow-y-auto space-y-2 text-sm text-gray-800" style="white-space: pre-wrap;">
+          <!-- 채팅 내용 들어감 -->
+        </div>
+
+        <!-- 입력창 -->
+        <form id="chat-form" class="p-3 bg-white border-t border-gray-200 flex gap-2">
+          <input id="question-input" type="text" placeholder="메시지를 입력하세요" required
+            class="flex-1 px-3 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm" />
+          <button type="submit"
+            class="bg-pink-400 hover:bg-pink-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
+            전송
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ✅ 오른쪽: 브랜드 공간 -->
+    <div class="w-1/2 bg-gradient-to-tr from-purple-900 to-pink-500 text-white flex flex-col items-center justify-center relative p-10">
+      <h1 class="text-4xl font-extrabold mb-4">점심 메뉴를 추천해드려요!</h1>
+      <p class="text-lg text-pink-100">오늘 뭐 먹을지 점메추리가 도와드릴게요!</p>
+
+      <!-- 장식 원 -->
+      <div class="absolute top-0 right-0 w-full h-full pointer-events-none overflow-hidden">
+        <div class="absolute w-32 h-32 bg-pink-300 rounded-full top-10 left-10 animate-bounce"></div>
+        <div class="absolute w-20 h-20 bg-pink-200 rounded-full bottom-20 right-20 animate-pulse"></div>
+        <div class="absolute w-10 h-10 bg-white opacity-30 rounded-full top-1/2 left-1/3 animate-spin"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ✅ 자바스크립트 -->
+  <script>
+    const form = document.getElementById("chat-form");
+    const input = document.getElementById("question-input");
+    const chatBox = document.getElementById("chat-box");
+    const button = form.querySelector("button");
+
+    // ✅ 사용자 이름 (Jinja2로 서버에서 주입됨)
+    const username = '{{ username }}';
+    const localStorageKey = `chatHistory_${username}`;
+
+    // ✅ 대화 기록 불러오기
+    window.addEventListener("load", () => {
+      const savedChat = localStorage.getItem(localStorageKey);
+      if (savedChat) {
+        chatBox.innerHTML = savedChat;
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+    });
+
+    // ✅ 질문 전송
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const question = input.value.trim();
+      if (!question) return;
+
+      input.disabled = true;
+      button.disabled = true;
+
+      chatBox.innerHTML += `<div class="text-right"><span class="bg-pink-200 px-3 py-2 rounded-full inline-block mb-1">👤 <strong>나:</strong> ${question}</span></div>`;
+
+      const loadingMessage = document.createElement("div");
+      loadingMessage.innerHTML = `<span class="bg-purple-100 px-3 py-2 rounded-full inline-block">🐥 <strong>점메추리:</strong> <em>로딩 중...</em></span>`;
+      chatBox.appendChild(loadingMessage);
+
+      input.value = "";
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      try {
+        const response = await fetch("/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question })
+        });
+
+        const data = await response.json();
+        const answer = data.answer.replace(/\n/g, "<br>");
+        loadingMessage.innerHTML = `<span class="bg-purple-100 px-3 py-2 rounded-full inline-block">🐤 <strong>점메추리:</strong> ${answer}</span>`;
+      } catch (error) {
+        loadingMessage.innerHTML = `<span class="bg-red-100 px-3 py-2 rounded-full inline-block">🐤 <strong>점메추리:</strong> 응답 실패</span>`;
+      }
+
+      input.disabled = false;
+      button.disabled = false;
+      input.focus();
+
+      localStorage.setItem(localStorageKey, chatBox.innerHTML);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    });
+
+    // ✅ 대화 초기화
+    function resetChat() {
+      if (confirm("대화를 초기화할까요?")) {
+        localStorage.removeItem(localStorageKey);
+        chatBox.innerHTML = "";
+      }
+    }
+
+    // ✅ 로그아웃 처리
+    function logout() {
+      document.cookie = "username=; max-age=0; path=/";
+      window.location.href = "/";
+    }
+  </script>
 </body>
 </html>

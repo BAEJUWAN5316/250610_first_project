@@ -1,16 +1,83 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Log In</title>
-  </head>
-  <body>
-    <h1>회원가입 페이지 입니다.</h1>
-    <form action="/signup" method="post">
-        <input name="id_signup" placeholder="생성할 id를 입력하세요."><br>
-        <input name="pw_signup" placeholder="생성할 pw를 입력하세요.">
-        <button type="submit">회원가입 완료</button>
-    </form>
-  </body>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>회원가입 | 점메추리알</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Noto Sans KR', sans-serif; }
+  </style>
+</head>
+<body class="bg-gradient-to-r from-pink-500 to-red-500 min-h-screen flex items-center justify-center relative">
+
+  <!-- ✅ 프로그램 설명 -->
+  <div class="absolute top-10 text-white text-2xl font-bold z-20 text-center">
+    점심메뉴를 추천해주는 <span class="text-yellow-200">점메추리</span>
+  </div>
+
+  <div class="w-full max-w-4xl bg-white rounded-2xl shadow-lg flex overflow-hidden">
+    <!-- 왼쪽: 회원가입 폼 -->
+    <div class="w-1/2 bg-gradient-to-tr from-purple-900 to-pink-500 text-white p-10 flex flex-col justify-center">
+      <h2 class="text-3xl font-bold mb-4">회원가입</h2>
+      <form id="signup-form" class="space-y-4">
+        <input id="username" name="username" type="text" placeholder="아이디"
+          class="w-full px-4 py-2 rounded bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300" required />
+        <input id="password" name="password" type="password" placeholder="비밀번호"
+          class="w-full px-4 py-2 rounded bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300" required />
+        <input id="email" name="email" type="email" placeholder="이메일 주소"
+          class="w-full px-4 py-2 rounded bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300" required />
+        <button type="submit"
+          class="w-full bg-pink-400 hover:bg-pink-500 transition duration-300 text-white py-2 rounded font-semibold">
+          회원가입 하기
+        </button>
+      </form>
+      <p class="text-sm mt-4">
+        이미 계정이 있으신가요? <a href="/" class="text-white font-bold hover:underline">로그인</a>
+      </p>
+    </div>
+
+    <!-- 오른쪽: 환영 메시지 + 도형 -->
+    <div class="w-1/2 bg-white flex flex-col items-center justify-center text-center p-10 relative">
+      <div class="relative z-10">
+        <h1 class="text-4xl font-bold text-pink-500 mb-2">환영합니다!</h1>
+        <p class="text-gray-600">계속하려면 회원가입하세요</p>
+      </div>
+      <div class="absolute top-0 right-0 w-full h-full overflow-hidden pointer-events-none z-0">
+        <div class="absolute w-20 h-20 bg-pink-300 rounded-full top-10 left-10 animate-bounce"></div>
+        <div class="absolute w-32 h-32 bg-red-400 rounded-full top-32 right-10 animate-pulse"></div>
+        <div class="absolute w-10 h-10 bg-pink-200 rounded-full bottom-10 left-20 animate-spin"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("signup-form").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+      const email = document.getElementById("email").value;
+
+      if (username.length < 4) {
+        alert("아이디는 4자 이상이어야 합니다."); return;
+      }
+      if (password.length < 8 || !/[!@#$%^&*(),.?":{}|<>]/.test(password) || !/[A-Za-z]/.test(password)) {
+        alert("비밀번호는 8자 이상이며, 영문자와 특수문자를 포함해야 합니다."); return;
+      }
+
+      const response = await fetch("/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password, email })
+      });
+      const result = await response.json();
+      if (result.success) {
+        alert("회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.");
+        window.location.href = "/";
+      } else {
+        alert(result.reason || "회원가입에 실패했습니다.");
+      }
+    });
+  </script>
+</body>
 </html>
